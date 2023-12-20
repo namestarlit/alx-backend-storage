@@ -1,38 +1,27 @@
 #!/usr/bin/env python3
 """A module that provides some stats about Nginx logs stored in MongoDB"""
+from pymongo import MongoClient
 
 
-def log_stats(mongo_collection):
-    """retrives stats from nginx collection"""
-    # Get the total number of logs
-    total_logs = mongo_collection.count_documents({})
-    print(f"{total_logs} logs")
+def print_nginx_request_logs(nginx_collection):
+    """Prints stats about Nginx request logs. """
+    print("{} logs".format(nginx_collection.count_documents({})))
+    print("Methods:")
+    methods = ["GET", "POST", "PUT", "PATCH", "DELETE"]
+    for method in methods:
+        req_count = len(list(nginx_collection.find({"method": method})))
+        print("\tmethod {}: {}".format(method, req_count))
+    status_checks_count = len(list(
+        nginx_collection.find({"method": "GET", "path": "/status"})
+    ))
+    print("{} status check".format(status_checks_count))
 
-    # Use aggregation to get the count of logs for each method
-    pipeline = [
-            {"$group": {"_id": "$method", "count": {"$sum": 1}}}
-            ]
-    methods_counts = list(mongo_collection.aggregate(pipeline))
 
-    # Define the methods in the desired order
-    ordered_methods = ["GET", "POST", "PUT", "PATCH", "DELETE"]
-
-    for method in ordered_methods:
-        count = (next((item["count"] for item in methods_counts
-                       if item["_id"] == method), 0))
-        print(f"\tmethod {method}: {count}")
-
-    # Get the count of logs with method=GET and path=/status
-    status_check_count = mongo_collection.count_documents(
-            {"method": "GET", "path": "/status"})
-    print(f"{status_check_count} status check")
+def run():
+    """Provides some stats about Nginx logs stored in MongoDB. """
+    client = MongoClient("mongodb://127.0.0.1:27017")
+    print_nginx_request_logs(client.logs.nginx)
 
 
 if __name__ == "__main__":
-    # Connect to MongoDB and specify the database and collection
-    client = MongoClient('mongodb://127.0.0.1:27017')
-    db = client.logs
-    nginx_collection = db.nginx
-
-    # Call the log_stats function with the Nginx collection
-    log_stats(nginx_collection)
+    run()
