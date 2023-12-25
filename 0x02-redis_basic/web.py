@@ -17,11 +17,6 @@ def data_cacher(method: Callable) -> Callable:
     Decorator function that caches the result of a method
     with a given URL and tracks access count.
 
-    Args:
-        method (Callable): The method to be decorated.
-
-    Returns:
-        Callable: The decorated method.
     """
 
     @wraps(method)
@@ -30,11 +25,6 @@ def data_cacher(method: Callable) -> Callable:
         Invokes the given method, tracks access count
         and caches the result with expiration.
 
-        Args:
-            url (str): The URL for which data is accessed.
-
-        Returns:
-            str: The result obtained from the method.
         """
         # Reset access count to 0
         redis_store.set(f"count:{url}", 0)
@@ -63,10 +53,5 @@ def get_page(url: str) -> str:
     """
     Retrieves the HTML content of a given URL using the requests module.
 
-    Args:
-        url (str): The URL to fetch the HTML content from.
-
-    Returns:
-        str: The HTML content of the specified URL.
     """
     return requests.get(url).text
